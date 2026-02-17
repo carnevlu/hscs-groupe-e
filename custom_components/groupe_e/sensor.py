@@ -5,6 +5,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import UnitOfEnergy
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -18,12 +19,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
         ]
     )
 
-class GroupeEEnergySensor(SensorEntity):
+class GroupeEEnergySensor(CoordinatorEntity, SensorEntity):
     """Groupe-E Energy Sensor."""
 
     def __init__(self, coordinator):
         """Initialize the sensor."""
-        self.coordinator = coordinator
+        super().__init__(coordinator)
         self._attr_name = "Groupe-E Energy Consumption"
         self._attr_unique_id = f"{coordinator.premise}_energy"
         self._attr_device_class = SensorDeviceClass.ENERGY
@@ -31,27 +32,16 @@ class GroupeEEnergySensor(SensorEntity):
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
     @property
-    def state(self):
+    def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get("total_consumption")
 
-    @property
-    def should_poll(self):
-        """No polling needed for coordinator sensors."""
-        return False
-
-    async def async_added_to_hass(self):
-        """When entity is added to hass."""
-        self.async_on_remove(
-            self.coordinator.async_add_listener(self.async_write_ha_state)
-        )
-
-class GroupeEDailyEnergySensor(SensorEntity):
+class GroupeEDailyEnergySensor(CoordinatorEntity, SensorEntity):
     """Groupe-E Daily Energy Sensor."""
 
     def __init__(self, coordinator):
         """Initialize the sensor."""
-        self.coordinator = coordinator
+        super().__init__(coordinator)
         self._attr_name = "Groupe-E Daily Energy Consumption"
         self._attr_unique_id = f"{coordinator.premise}_daily_energy"
         self._attr_device_class = SensorDeviceClass.ENERGY
@@ -59,27 +49,16 @@ class GroupeEDailyEnergySensor(SensorEntity):
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
     @property
-    def state(self):
+    def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get("daily_consumption")
 
-    @property
-    def should_poll(self):
-        """No polling needed for coordinator sensors."""
-        return False
-
-    async def async_added_to_hass(self):
-        """When entity is added to hass."""
-        self.async_on_remove(
-            self.coordinator.async_add_listener(self.async_write_ha_state)
-        )
-
-class GroupeEMonthlyEnergySensor(SensorEntity):
+class GroupeEMonthlyEnergySensor(CoordinatorEntity, SensorEntity):
     """Groupe-E Monthly Energy Sensor."""
 
     def __init__(self, coordinator):
         """Initialize the sensor."""
-        self.coordinator = coordinator
+        super().__init__(coordinator)
         self._attr_name = "Groupe-E Monthly Energy Consumption"
         self._attr_unique_id = f"{coordinator.premise}_monthly_energy"
         self._attr_device_class = SensorDeviceClass.ENERGY
@@ -87,17 +66,6 @@ class GroupeEMonthlyEnergySensor(SensorEntity):
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
     @property
-    def state(self):
+    def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get("monthly_consumption")
-
-    @property
-    def should_poll(self):
-        """No polling needed for coordinator sensors."""
-        return False
-
-    async def async_added_to_hass(self):
-        """When entity is added to hass."""
-        self.async_on_remove(
-            self.coordinator.async_add_listener(self.async_write_ha_state)
-        )
