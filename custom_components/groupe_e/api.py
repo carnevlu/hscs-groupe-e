@@ -43,7 +43,7 @@ class GroupeEAPI:
             _LOGGER.error("Error during login: %s", err)
             return False
 
-    async def get_smartmeter_data(self, premise: str, partner: str, start: datetime, end: datetime):
+    async def get_smartmeter_data(self, premise: str, partner: str, start: datetime, end: datetime, resolution: str = "quarter-hourly"):
         """Fetch smart meter data."""
         if not self._token:
             if not await self._async_login():
@@ -66,7 +66,7 @@ class GroupeEAPI:
             "partner": partner,
             "start": start_ts,
             "end": end_ts,
-            "resolution": "quarter-hourly"
+            "resolution": resolution
         }
 
         async with self._session.post(

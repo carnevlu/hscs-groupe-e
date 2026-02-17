@@ -25,56 +25,79 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from API."""
         try:
             now = datetime.now()
-            start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-            end = now
+            # Fetch historical data (daily resolution) for the current year
+            # This is more efficient and less likely to be truncated by the API
+            start_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
-            if self.data is None:
-                _LOGGER.info("Fetching historical data for Groupe-E from %s", start)
-
-            response_json = await self.api.get_smartmeter_data(
-                self.premise, self.partner, start, end
+            # Fetch historical daily data
+            historical_data = await self.api.get_smartmeter_data(
+                self.premise, self.partner, start_year, now, resolution="daily"
             )
 
-            if not response_json or not isinstance(response_json, list):
-                _LOGGER.warning("Unexpected API response format from Groupe-E: %s", response_json)
-                return self.data if self.data else {"total_consumption": 0, "raw_data": response_json}
+            # Fetch today's detailed data (quarter-hourly) for better accuracy for the daily sensor
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_detailed_data = await self.api.get_smartmeter_data(
+                self.premise, self.partner, today_start, now, resolution="quarter-hourly"
+            )
 
-            # The API returns a list of dictionaries. We need to find the one with the data.
-            # Based on your curl, it's at index 0 and has a 'data' key with 'measurementData'.
+            # Fetch this month's data specifically (optional, but good for clarity)
+            # Alternatively, we can extract this from historical_data if it's there
+            month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
             total_consumption = 0
             daily_consumption = 0
-            found_data = False
+            monthly_consumption = 0
+            found_historical = False
+            found_detailed = False
 
-            # We'll use this to calculate daily consumption (today)
-            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            today_start_ts = int(today_start.timestamp() * 1000)
+            # Sum up historical daily values (excluding today to avoid double counting if today is in historical)
+            today_ts = int(today_start.timestamp() * 1000)
+            month_ts = int(month_start.timestamp() * 1000)
 
-            for item in response_json:
-                data_section = item.get("data", {})
-                measurements = data_section.get("measurementData", [])
+            if historical_data and isinstance(historical_data, list):
+                for item in historical_data:
+                    measurements = item.get("data", {}).get("measurementData", [])
+                    if measurements:
+                        found_historical = True
+                        for entry in measurements:
+                            ts = entry.get("timestamp", 0)
+                            value = entry.get("value", 0)
+                            if ts < today_ts:
+                                total_consumption += value
 
-                if measurements:
-                    found_data = True
-                    for entry in measurements:
-                        # The API returns quarter-hourly values. We sum them up.
-                        value = entry.get("value", 0)
-                        total_consumption += value
+                            # Calculate monthly consumption (excluding today)
+                            if month_ts <= ts < today_ts:
+                                monthly_consumption += value
 
-                        # Check if this measurement belongs to today
-                        # Note: The entry['timestamp'] is in milliseconds
-                        if entry.get("timestamp", 0) >= today_start_ts:
+            # Sum up today's detailed values
+            if today_detailed_data and isinstance(today_detailed_data, list):
+                for item in today_detailed_data:
+                    measurements = item.get("data", {}).get("measurementData", [])
+                    if measurements:
+                        found_detailed = True
+                        for entry in measurements:
+                            value = entry.get("value", 0)
+                            total_consumption += value
                             daily_consumption += value
+                            monthly_consumption += value
 
-            if not found_data:
-                _LOGGER.warning("No measurementData found in Groupe-E API response for period %s to %s", start, end)
-                return self.data if self.data else {"total_consumption": 0, "daily_consumption": 0, "raw_data": response_json}
+            if not found_historical and not found_detailed:
+                _LOGGER.warning("No measurementData found in Groupe-E API response")
+                return self.data if self.data else {
+                    "total_consumption": 0,
+                    "daily_consumption": 0,
+                    "monthly_consumption": 0,
+                }
 
-            _LOGGER.debug("Total consumption: %s, Daily consumption: %s from Groupe-E", total_consumption, daily_consumption)
+            _LOGGER.debug(
+                "Total: %s, Daily: %s, Monthly: %s (historical: %s, detailed: %s)",
+                total_consumption, daily_consumption, monthly_consumption, found_historical, found_detailed
+            )
 
             return {
-                "total_consumption": total_consumption,
-                "daily_consumption": daily_consumption,
-                "raw_data": response_json
+                "total_consumption": round(total_consumption, 2),
+                "daily_consumption": round(daily_consumption, 2),
+                "monthly_consumption": round(monthly_consumption, 2),
             }
         except Exception as err:
             _LOGGER.error("Error communicating with Groupe-E API: %s", err)
