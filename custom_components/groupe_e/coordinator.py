@@ -24,41 +24,48 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API."""
         try:
-            # For the first update, we can fetch from the beginning of the year
-            # For subsequent updates, we fetch the last 2 days to ensure we don't miss any data
             now = datetime.now()
 
             if self.data is None:
-                # First run: start from the beginning of the current year
                 start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
                 _LOGGER.info("Fetching historical data for Groupe-E from %s", start)
             else:
-                # Regular update: fetch last 48 hours to be safe
                 start = now - timedelta(days=2)
 
             end = now
 
-            data = await self.api.get_smartmeter_data(
+            response_json = await self.api.get_smartmeter_data(
                 self.premise, self.partner, start, end
             )
 
-            # Process data to get total consumption
+            if not response_json or not isinstance(response_json, list):
+                _LOGGER.warning("Unexpected API response format from Groupe-E: %s", response_json)
+                return self.data if self.data else {"total_consumption": 0, "raw_data": response_json}
+
+            # The API returns a list of dictionaries. We need to find the one with the data.
+            # Based on your curl, it's at index 0 and has a 'data' key with 'measurementData'.
             total_consumption = 0
-            entries = data.get("data", []) if isinstance(data, dict) else []
+            found_data = False
 
-            if not entries:
-                _LOGGER.warning("No data returned from Groupe-E API for period %s to %s", start, end)
-                return self.data if self.data else {"total_consumption": 0, "raw_data": data}
+            for item in response_json:
+                data_section = item.get("data", {})
+                measurements = data_section.get("measurementData", [])
 
-            for entry in entries:
-                # The API returns quarter-hourly values. We sum them up.
-                total_consumption += entry.get("value", 0)
+                if measurements:
+                    found_data = True
+                    for entry in measurements:
+                        # The API returns quarter-hourly values. We sum them up.
+                        total_consumption += entry.get("value", 0)
 
-            _LOGGER.debug("Total consumption calculated: %s for %d entries", total_consumption, len(entries))
+            if not found_data:
+                _LOGGER.warning("No measurementData found in Groupe-E API response for period %s to %s", start, end)
+                return self.data if self.data else {"total_consumption": 0, "raw_data": response_json}
+
+            _LOGGER.debug("Total consumption calculated: %s from Groupe-E", total_consumption)
 
             return {
                 "total_consumption": total_consumption,
-                "raw_data": data
+                "raw_data": response_json
             }
         except Exception as err:
             _LOGGER.error("Error communicating with Groupe-E API: %s", err)

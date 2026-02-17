@@ -54,8 +54,10 @@ class GroupeEAPI:
             "Authorization": f"Bearer {self._token}",
             "Content-Type": "application/json",
             "Accept": "application/json, text/plain, */*",
+            "X-Requested-With": "XMLHttpRequest",
         }
 
+        # Convert datetimes to milliseconds timestamps
         start_ts = int(start.timestamp() * 1000)
         end_ts = int(end.timestamp() * 1000)
 
