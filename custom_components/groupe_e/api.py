@@ -28,7 +28,6 @@ class GroupeEAPI:
             "client_id": "portal",
             "username": self._username,
             "password": self._password,
-            "scope": "openid email profile"
         }
 
         try:
