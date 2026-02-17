@@ -6,7 +6,13 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import config_entry_oauth2_flow
-from .const import DOMAIN, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL
+from .const import (
+    DOMAIN,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_UPDATE_INTERVAL,
+    CONF_PREMISE,
+    CONF_PARTNER,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,9 +34,25 @@ class GroupeEOAuth2FlowHandler(
 
     async def async_oauth_create_entry(self, data: dict) -> dict:
         """Create an entry for the flow."""
-        # Typically, you would fetch user info here to automatically get IDs.
-        # For now, we'll store the OAuth data.
-        return self.async_create_entry(title="Groupe-E Energy", data=data)
+        # After OAuth, we need to get the IDs
+        self.data = data
+        return await self.async_step_user_info()
+
+    async def async_step_user_info(self, user_input=None):
+        """Manual entry of IDs if needed."""
+        if user_input is not None:
+            self.data.update(user_input)
+            return self.async_create_entry(title="Groupe-E Energy", data=self.data)
+
+        return self.async_show_form(
+            step_id="user_info",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_PREMISE): str,
+                    vol.Required(CONF_PARTNER): str,
+                }
+            ),
+        )
 
     @staticmethod
     @callback

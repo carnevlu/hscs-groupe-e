@@ -22,9 +22,10 @@ This Home Assistant integration allows you to monitor your energy consumption fr
 1. Open HACS in Home Assistant.
 2. Click on **Integrations**.
 3. Click the three dots in the top right corner and select **Custom repositories**.
-4. Paste the URL of this repository and select **Integration** as the category.
-5. Click **Add** and then install the **Groupe-E Energy** integration.
-6. Restart Home Assistant.
+4. Paste the URL of this repository: `https://github.com/carnevlu/hscs-groupe-e`
+5. Select **Integration** as the category.
+6. Click **Add** and then install the **Groupe-E Energy** integration.
+7. Restart Home Assistant.
 
 ## Configuration
 

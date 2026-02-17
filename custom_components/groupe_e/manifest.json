@@ -3,10 +3,10 @@
   "name": "Groupe-E Energy",
   "codeowners": ["@lucacarnevale"],
   "config_flow": true,
-  "documentation": "https://github.com/lucacarnevale/hscs-groupe-e",
+  "documentation": "https://github.com/carnevlu/hscs-groupe-e",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/lucacarnevale/hscs-groupe-e/issues",
-  "version": "1.0.0",
+  "issue_tracker": "https://github.com/carnevlu/hscs-groupe-e/issues",
+  "version": "1.0.1",
   "requirements": ["aiohttp"],
   "brand": "groupe_e"
 }
