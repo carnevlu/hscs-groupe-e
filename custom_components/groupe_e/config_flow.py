@@ -20,7 +20,11 @@ class GroupeEFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user."""
         errors = {}
         if user_input is not None:
-            # Here we will eventually add validation
+            # Check if already configured
+            await self.async_set_unique_id(user_input[CONF_USERNAME])
+            self._abort_if_unique_id_configured()
+
+            # Simple title
             return self.async_create_entry(title=user_input[CONF_USERNAME], data=user_input)
 
         return self.async_show_form(

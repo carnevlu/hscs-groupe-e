@@ -5,6 +5,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import GroupeEAPI
 from .coordinator import GroupeEDataUpdateCoordinator
 from .const import (
@@ -27,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     partner = entry.data.get(CONF_PARTNER)
 
     api = GroupeEAPI(
-        hass.helpers.aiohttp_client.async_get_clientsession(hass),
+        async_get_clientsession(hass),
         username,
         password
     )

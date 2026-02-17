@@ -34,11 +34,17 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
             )
 
             # Process data to get total consumption
-            # This is a simplified example. You'll need to parse the actual JSON structure.
             total_consumption = 0
-            if "data" in data:
-                for entry in data["data"]:
-                    total_consumption += entry.get("value", 0)
+            # Based on typical Groupe-E response, it might be in an 'entries' or 'data' list
+            # We iterate through all values returned by the smart meter
+            entries = data.get("data", []) if isinstance(data, dict) else []
+
+            for entry in entries:
+                # The API returns quarter-hourly values. We sum them up for the day.
+                total_consumption += entry.get("value", 0)
+
+            # Convert to kWh if the API returns Wh (adjust as needed based on observation)
+            # total_consumption = total_consumption / 1000
 
             return {
                 "total_consumption": total_consumption,
