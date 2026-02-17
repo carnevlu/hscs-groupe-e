@@ -7,5 +7,6 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/lucacarnevale/hscs-groupe-e/issues",
   "version": "1.0.0",
-  "requirements": []
+  "requirements": ["aiohttp"],
+  "brand": "groupe_e"
 }
