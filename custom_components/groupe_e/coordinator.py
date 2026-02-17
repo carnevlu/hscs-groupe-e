@@ -25,14 +25,11 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from API."""
         try:
             now = datetime.now()
+            start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            end = now
 
             if self.data is None:
-                start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
                 _LOGGER.info("Fetching historical data for Groupe-E from %s", start)
-            else:
-                start = now - timedelta(days=2)
-
-            end = now
 
             response_json = await self.api.get_smartmeter_data(
                 self.premise, self.partner, start, end
