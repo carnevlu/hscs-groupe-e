@@ -6,6 +6,7 @@ This Home Assistant integration allows you to monitor your energy consumption fr
 
 - **Direct Login**: Secure login using your official Groupe-E email and password.
 - **Energy Dashboard Ready**: Sensors are configured with `device_class: energy` and `state_class: total_increasing`.
+- **Daily Sensor**: A new sensor that specifically shows today's consumption.
 - **Configurable Polling**: Adjust how often data is fetched from the API (default: every 60 minutes).
 - **Daily Consumption**: Automatically aggregates data into daily totals.
 
