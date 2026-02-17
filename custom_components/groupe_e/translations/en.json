@@ -2,16 +2,14 @@
     "config": {
         "step": {
             "user": {
-                "title": "Authenticate with Groupe-E",
-                "description": "You will be redirected to the Groupe-E login page."
-            },
-            "user_info": {
-                "title": "Energy Setup",
+                "title": "Login to Groupe-E",
                 "data": {
+                    "username": "Username",
+                    "password": "Password",
                     "premise": "Premise ID (e.g. 106180)",
                     "partner": "Partner ID (e.g. 6050184)"
                 },
-                "description": "Enter your IDs found in your Groupe-E portal (or from the smartmeter-data API request)."
+                "description": "Enter your Groupe-E credentials and the IDs found in your portal."
             }
         },
         "abort": {

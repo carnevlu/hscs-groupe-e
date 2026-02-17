@@ -2,9 +2,7 @@
 from datetime import timedelta
 import logging
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_entry_oauth2_flow
+from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
 from .api import GroupeEAPI
 from .coordinator import GroupeEDataUpdateCoordinator
 from .const import (
@@ -21,18 +19,16 @@ PLATFORMS = ["sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Groupe-E Energy from a config entry."""
-    implementation = (
-        await config_entry_oauth2_flow.async_get_config_entry_implementation(hass, entry)
-    )
-    session = config_entry_oauth2_flow.OAuth2Session(hass, entry, implementation)
+    username = entry.data.get(CONF_USERNAME)
+    password = entry.data.get(CONF_PASSWORD)
+    premise = entry.data.get(CONF_PREMISE)
+    partner = entry.data.get(CONF_PARTNER)
 
     api = GroupeEAPI(
-        hass.helpers.aiohttp_client.async_get_clientsession(hass), session.token
+        hass.helpers.aiohttp_client.async_get_clientsession(hass),
+        username,
+        password
     )
-
-    # These should ideally be retrieved during config flow from userinfo
-    premise = entry.data.get(CONF_PREMISE, "106180")
-    partner = entry.data.get(CONF_PARTNER, "6050184")
 
     update_interval = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
 
