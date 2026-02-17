@@ -1,12 +1,12 @@
 {
   "domain": "groupe_e",
   "name": "Groupe-E Energy",
-  "codeowners": ["@lucacarnevale"],
+  "codeowners": ["@carnevlu"],
   "config_flow": true,
   "documentation": "https://github.com/carnevlu/hscs-groupe-e",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/carnevlu/hscs-groupe-e/issues",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "requirements": ["aiohttp"],
   "brand": "groupe_e"
 }

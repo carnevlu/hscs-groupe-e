@@ -1,0 +1,34 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Authenticate with Groupe-E",
+                "description": "You will be redirected to the Groupe-E login page."
+            },
+            "user_info": {
+                "title": "Energy Setup",
+                "data": {
+                    "premise": "Premise ID (e.g. 106180)",
+                    "partner": "Partner ID (e.g. 6050184)"
+                },
+                "description": "Enter your IDs found in your Groupe-E portal (or from the smartmeter-data API request)."
+            }
+        },
+        "abort": {
+            "already_configured": "Device is already configured",
+            "already_in_progress": "Configuration flow is already in progress",
+            "oauth_error": "Generic OAuth error",
+            "missing_configuration": "The component is not configured. Please follow the documentation."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Groupe-E Settings",
+                "data": {
+                    "update_interval": "Update Interval (minutes)"
+                }
+            }
+        }
+    }
+}
