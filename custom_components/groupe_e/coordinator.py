@@ -54,6 +54,14 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
             today_ts = int(today_start.timestamp() * 1000)
             month_ts = int(month_start.timestamp() * 1000)
 
+            # We need to distinguish between having a response and having data
+            has_detailed_data = False
+            if today_detailed_data and isinstance(today_detailed_data, list):
+                for item in today_detailed_data:
+                    if item.get("data", {}).get("measurementData", []):
+                        has_detailed_data = True
+                        break
+
             if historical_data and isinstance(historical_data, list):
                 for item in historical_data:
                     measurements = item.get("data", {}).get("measurementData", [])
@@ -62,24 +70,43 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
                         for entry in measurements:
                             ts = entry.get("timestamp", 0)
                             value = entry.get("value", 0)
+
+                            # Log values for debugging
+                            _LOGGER.debug("Historical entry: ts=%s, value=%s", ts, value)
+
                             if ts < today_ts:
                                 total_consumption += value
+                            else:
+                                # If today is in historical data, we can use it as fallback if detailed fails
+                                if not has_detailed_data:
+                                    daily_consumption += value
+                                    total_consumption += value
+                                    found_detailed = True # Mark as found to avoid warning
+                                    _LOGGER.debug("Using historical daily value for today: %s", value)
 
-                            # Calculate monthly consumption (excluding today)
-                            if month_ts <= ts < today_ts:
-                                monthly_consumption += value
+                            # Calculate monthly consumption
+                            if month_ts <= ts:
+                                if ts < today_ts:
+                                    monthly_consumption += value
+                                elif not has_detailed_data:
+                                    monthly_consumption += value
 
             # Sum up today's detailed values
-            if today_detailed_data and isinstance(today_detailed_data, list):
+            if has_detailed_data:
+                detailed_sum = 0
                 for item in today_detailed_data:
                     measurements = item.get("data", {}).get("measurementData", [])
                     if measurements:
                         found_detailed = True
                         for entry in measurements:
                             value = entry.get("value", 0)
-                            total_consumption += value
-                            daily_consumption += value
-                            monthly_consumption += value
+                            detailed_sum += value
+
+                if detailed_sum >= 0:
+                    total_consumption += detailed_sum
+                    daily_consumption = detailed_sum
+                    monthly_consumption += detailed_sum
+                    _LOGGER.debug("Today's detailed sum: %s", detailed_sum)
 
             if not found_historical and not found_detailed:
                 _LOGGER.warning("No measurementData found in Groupe-E API response")
