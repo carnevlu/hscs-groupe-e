@@ -36,6 +36,7 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
 
             # Fetch today's detailed data (quarter-hourly) for better accuracy for the daily sensor
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            yesterday_start = today_start - timedelta(days=1)
             today_detailed_data = await self.api.get_smartmeter_data(
                 self.premise, self.partner, today_start, now, resolution="quarter-hourly"
             )
@@ -46,12 +47,14 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
 
             total_consumption = 0
             daily_consumption = 0
+            yesterday_consumption = 0
             monthly_consumption = 0
             found_historical = False
             found_detailed = False
 
             # Sum up historical daily values (excluding today to avoid double counting if today is in historical)
             today_ts = int(today_start.timestamp() * 1000)
+            yesterday_ts = int(yesterday_start.timestamp() * 1000)
             month_ts = int(month_start.timestamp() * 1000)
 
             # We need to distinguish between having a response and having data
@@ -84,6 +87,10 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
                                     found_detailed = True # Mark as found to avoid warning
                                     _LOGGER.debug("Using historical daily value for today: %s", value)
 
+                            # Calculate yesterday's consumption
+                            if yesterday_ts <= ts < today_ts:
+                                yesterday_consumption += value
+
                             # Calculate monthly consumption
                             if month_ts <= ts:
                                 if ts < today_ts:
@@ -113,17 +120,19 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
                 return self.data if self.data else {
                     "total_consumption": 0,
                     "daily_consumption": 0,
+                    "yesterday_consumption": 0,
                     "monthly_consumption": 0,
                 }
 
             _LOGGER.debug(
-                "Total: %s, Daily: %s, Monthly: %s (historical: %s, detailed: %s)",
-                total_consumption, daily_consumption, monthly_consumption, found_historical, found_detailed
+                "Total: %s, Daily: %s, Yesterday: %s, Monthly: %s (historical: %s, detailed: %s)",
+                total_consumption, daily_consumption, yesterday_consumption, monthly_consumption, found_historical, found_detailed
             )
 
             return {
                 "total_consumption": round(total_consumption, 2),
                 "daily_consumption": round(daily_consumption, 2),
+                "yesterday_consumption": round(yesterday_consumption, 2),
                 "monthly_consumption": round(monthly_consumption, 2),
             }
         except Exception as err:
