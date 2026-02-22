@@ -57,6 +57,11 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
             yesterday_ts = int(yesterday_start.timestamp() * 1000)
             month_ts = int(month_start.timestamp() * 1000)
 
+            # Keep track of timestamps we've already processed to avoid double counting
+            # if the API returns duplicates in the list
+            seen_historical_ts = set()
+            seen_detailed_ts = set()
+
             # We need to distinguish between having a response and having data
             has_detailed_data = False
             if today_detailed_data and isinstance(today_detailed_data, list):
@@ -72,6 +77,10 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
                         found_historical = True
                         for entry in measurements:
                             ts = entry.get("timestamp", 0)
+                            if ts in seen_historical_ts:
+                                continue
+                            seen_historical_ts.add(ts)
+
                             value = entry.get("value", 0)
 
                             # Log values for debugging
@@ -106,8 +115,17 @@ class GroupeEDataUpdateCoordinator(DataUpdateCoordinator):
                     if measurements:
                         found_detailed = True
                         for entry in measurements:
+                            ts = entry.get("timestamp", 0)
+                            if ts in seen_detailed_ts:
+                                continue
+                            seen_detailed_ts.add(ts)
+
                             value = entry.get("value", 0)
-                            detailed_sum += value
+                            # The API returns values in kW (power) for 15-minute intervals.
+                            # We need to divide by 4 to get kWh (energy).
+                            # If it was already energy, we wouldn't see the 4x increase.
+                            energy_value = value / 4
+                            detailed_sum += energy_value
 
                 if detailed_sum >= 0:
                     total_consumption += detailed_sum
