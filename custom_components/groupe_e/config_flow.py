@@ -3,7 +3,13 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
-from .const import DOMAIN, CONF_PREMISE, CONF_PARTNER
+from .const import (
+    DOMAIN,
+    CONF_PREMISE,
+    CONF_PARTNER,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_UPDATE_INTERVAL,
+)
 
 class GroupeEFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Groupe-E Energy."""
@@ -57,7 +63,6 @@ class GroupeEOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        from .const import CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
